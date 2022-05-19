@@ -1,42 +1,164 @@
-# simple_shell
+# Holberton Shell - a simple shell
 
-# A simple C shell project
+##### Holberton Shell (hsh) is a simple command line shell for OS X and Linux. Hsh includes most basic features present in the bash shell. This shell was built as a project for Holberton School.
 
-## Description
+#### Quick Start
 
-This is a simple UNIX command interpreter that replicates functionalities of the simple shell (sh). Additional functions are also included. This program was written entirely in C as a milestone project for Alx-Holberton School.
+------
 
-## Installation
+HSH works like any other shell, like bash or zsh. Detailed user documentation on specific commands is available by running help within hsh.
 
-Clone this repository into your working directory. Files should be compiled with GCC and the following flags: -Wall -Wextra -Werror -pedantic -Wno-format.
+HSH builds successfully with a GCC 4.8.5 compiler or later. HSH can compile using `gcc 4.8.4 -Wall -Werror -Wextra -pedantic *.c -o simple_shell`.
 
-## Usage
+To start up HSH, simply type in 
+```
+./simple_shell
+``` 
+the terminal.
 
-After compilation, the resulting program can run stand-alone, either in interactive or non-interactive mode.
+#### Syntax Overview
 
-## Interactive Mode
+------
 
-In interactive mode, simply run the program and wait for the prompt to appear. From there, you can type commands freely, exiting with either the "exit" command or ctrl-D.
+Like other shells, hsh is used by given it commands. Every hsh command follows the same general syntax: `command name {arguments}`. The command is executed by writing the name of the command followed by any arguements. 
 
-## Non-Interactive Mode
+```
+echo Hello Holberton
+```
 
-In non-interactive mode, echo your desired command and pipe it into the program like this:
+Above will run the `echo` command, which will write its arguements `Hello Holberton` to  the standard output. 
 
-echo "ls" | ./shell
-In non-interactive mode, the program will exit after finishing your desired command(s).
+For more information on echo, you can use the `man` command. The `man` command displays a manual page of a given command, system call, libraries, and important files. 
 
-This is the man page which contains all functions and descriptions of all the functions used in this Simple shell project. To access this page, Do:
+```
+man echo
+```
 
-## AUTHORS
+The hsh shell also provides various builtins, commands built into the hsh shell itself. For more information on specific builtins, you can use the `help` command, which provides a similar manual for the specific builtin.
 
-This file contains the details of all the individuals that contributed to this shell project.
+```
+help setenv
+```
 
-## Features
+Supported syntax and lists of builtins and commands are given in their respected sections. 
 
-1. Display a prompt and wait for the user to type a command. A command-line always ends with a new line.
-2. The prompt is displayed again each time a command has been executed.
-3. The command lines are simple, no semicolons, no pipes, no redirections, or any other advanced features.
-4. The command lines are made only of one word.No arguement will be passed to the programs.
-5.If an executable is not found the shell prints an error message and displays the prompt again.
+#### Commands
+
+------
+
+Any program in your computer can be used as a command in hsh. If the program is located in any of the directories in the [PATH - link include], then typing the filename is enough to run the command. Otherwise, a full path to the program is required
+
+```
+/Desktop/Holberton/my_echo Hello Holberton
+```
+
+##### Command Seperation 
+
+Commands and any arguments are seperated by a ` ' '` . Commands end with either a newline (i.e Return Key) or a `;`, `&&`, or `||`.  
+
+To enter more than one command in one line, a `;` can be used to seperate commands. Commands are read and executed left to right.
+
+```
+echo Hello Holberton ; ls
+```
+
+If commands are seperated by `&&` , the leftmost command is read and executed and if the execution failed, no other commands are executed, otherwise, the next command in line will be executed. If the commands is seperated by `||` , regardless of execution failure or success of the leftmost command, all suceeded commands are executed. 
+
+##### Switches & Flags
+
+Switches and flags arguements of commands are also supported by hsh. Most switches start with a hypen, `-`  and always somehows affect the command in one way. For example, when a user inputs:
+
+```
+ls -a
+```
+
+The `ls` commands lists all directories and files in the current working directory. However, including the switch `-a` , will also include all files and directories, including hidden ones. 
+
+##### Comments
+
+hsh provides support for comments added into standard input. Comments can be inputed by placing a `#` before any statement. Comments are ignored by hsh. 
+
+```
+echo # Hello Holberton
+```
+
+The above command will not write Hello Holberton to standard output.
+
+##### List of useful commands
+
+`cat` - concatenate and print files to standout output
+
+`cp` - copy files to another file
+
+`grep` - searches a file for a specified pattern
+
+`less` - allows backward moveement in the file as well as foward movement
+
+`ls` - lists all files and directories of current working directory
+
+`mv` - moves one file into another file
+
+`pwd` - prints out the current working directory
+
+#### Builtins 
+
+------
+
+There are several builtins programmed into the hsh. Below is a description and use for each builtin.
+
+##### env, setenv, unsetenv
+
+To print out a list of all the environemental variables, the builtin `env` can be used. Each environmental variable and its value is printed out with a syntax of `key=value`. Each variable is seperated by a new line. 
+
+To set an environemental variable, the builtin is `setenv`. The syntax to use `setenv` is `setenv key value`. If one of the arguments is missing, an error is returned. 
+
+```
+setenv holberton betty
+```
+
+To remove an environemental variable, the builtin `unsetenv` can be used. The syntax to use `unsetenv` is `unsetenv key`. If no `key` value is given, an error is returned.
+
+```
+unsetenv holberton
+```
+
+##### cd
+
+The `cd` command changes the shell working directory. The syntax to use the command is `cd DIR`. If no `DIR` is given, it is defaulted to the HOME shell variable. The full path of the directory is needed. To change the directory to its parent, the argument `..` can be used. 
+
+##### history
+
+To print out a list of previous commands used, the command `history` can be used. The previous 50 commands will be printed out. The history of all commands is written into the `.simple_shell_history` file.
+
+##### help
+
+To receive a description and the syntax use of a specific command, you can use the `help` command. To use the `help` builtin, the synatax is as follows 
+
+```
+help cd
+```
+
+The output would include usage followed by a definition.
+
+```
+cd usage: cd DIR
+	Change the current directory to DIR
+```
+
+##### exit
+
+To exit out of the shell, the user may use the `exit` builtin. To use `exit`, a status number, `n` can be given. If `n` is ommited, the exit status is that of the last command executed.
+
+```
+exit 1
+```
+
+#### Exiting commands and hsh
+
+------
+
+To exit out of a process or command, `ctrl c` is used. Control-C interrupts a process and causes it to abort.
+
+To exit out of the hsh shell, the user can do one of the following, `ctrl D` or `exit n`. When exiting with `ctrl D`, an exit status of 0 is given. Using `exit`, you can input its exit status or it is defaulted to the status of the last command executed. 
 
 

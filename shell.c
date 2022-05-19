@@ -1,87 +1,106 @@
-#include "main.h"
-
+#include "shell.h"
 /**
- * execute - executes the command
- * @cmd: command to run
- * Return: 0 on success1 -1 if cmd is exit and 1 on any other error
+ * main - Holberton Shell
+ * @argc: argument count
+ * @argv: a list of all arguments
+ * @envp: environmental variable list from the parent
+ * Return: 0 on success.
  */
-int execute(char **cmd)
+int main(int argc, char **argv, char **envp)
 {
+	char **arg_list;
+	env_t *env_p;
+	int retrn_value;
+	buffer b = {NULL, BUFSIZE, 0};
+	(void)argc, (void)argv, (void)envp;
 
-	pid_t child_pid;
-	int status;
+	b.buf = safe_malloc(sizeof(char) * b.size);
+	arg_list = NULL;
+	retrn_value = 0;
 
-	if (strncmp("exit", cmd[0], 4) == 0)
-		return (-1);
-
-	child_pid = fork();
-
-	if (child_pid == -1)
+	env_p = create_envlist();
+	history_wrapper("", env_p, 'c');
+	signal(SIGINT, SIG_IGN);
+	signal(SIGINT, signal_handler);
+	while (1)
 	{
-		perror("Error");
-		return (1);
-	}
-	else if (child_pid == 0)
-	{
-		if (execve(cmd[0], cmd, NULL) == -1)
+		if (!more_cmds(&b, retrn_value))
 		{
-			perror("Error");
-			exit(-1);
+			print_cmdline();
+			_getline(&b, STDIN_FILENO, env_p);
+			history_wrapper(b.buf, env_p, 'a');
 		}
+		while (alias_expansion(&b, env_p))
+			;
+		variable_expansion(&b, env_p, retrn_value);
+		_getline_fileread(&b, env_p);
+		tokenize_buf(&b, &arg_list);
+		if (arg_list[0] == NULL)
+			continue;
+		retrn_value = run_builtin(arg_list, env_p, b.size);
+		if (retrn_value != 0 && retrn_value != 2)
+			retrn_value = run_execute(arg_list, env_p, b.size);
 	}
-	else
-		wait(&status);
-
 	return (0);
 }
-
-
 /**
- * main - main simple shell
- * @argc: number of arguments
- * @argv: list of command line arguments
- * Return: Always 0, -1 on error.
+ * more_cmds - check the command line for the next command
+ * @b: buffer structure
+ * @retrn_value: Return value from last command
+ * Description: Controls the logic behind if multi-part input has more
+ *				commands to execute. Handles ; && and ||.
+ *				Will advance buffer to next command.
+ *
+ * Return: 1 if we have more commands to execute, 0 if we don't
  */
-
-int main(int argc, char **argv)
+int more_cmds(buffer *b, int retrn_value)
 {
-
-	int response;
-	char **tokens;
-	size_t bufsize = BUFSIZ;
-	int isPipe = 0;
-	char *buffer;
-
-	if (argc >= 2)
-	{
-		/*TODO: Handle cases where there is no argument, only the command*/
-		if (execve(argv[1], argv, NULL) == -1)
-		{
-			perror("Error");
-			exit(-1);
-		}
+	if (b->bp == 0)
 		return (0);
-	}
 
-	buffer = (char *)malloc(bufsize * sizeof(char));
-	if (buffer == NULL)
+	while (b->buf[b->bp] != '\0')
 	{
-		perror("Unable to allocate buffer");
-		exit(1);
-	}
-
-	do {
-		if (isatty(fileno(stdin)))
+		if (b->buf[b->bp] == ';')
 		{
-			isPipe = 1;
-			_puts("cisfun#: ");
+			trim_cmd(b);
+			return (1);
 		}
-
-		getline(&buffer, &bufsize, stdin);
-		buffer[_strlen(buffer) - 1] = '\0';
-		tokens = stringToTokens(buffer);
-		response = execute(tokens);
-	} while (isPipe && response != -1);
-
+		if (b->buf[b->bp] == '&' && retrn_value == 0)
+		{
+			trim_cmd(b);
+			return (1);
+		}
+		if (b->buf[b->bp] == '|' && retrn_value != 0)
+		{
+			trim_cmd(b);
+			return (1);
+		}
+		b->bp++;
+	}
+	b->bp = 0;
 	return (0);
+}
+/**
+ * trim_cmd - move past cmd flowcontrol point at given buffer position
+ * @b: buffer structure
+ * Description: Small helper function for function more_cmds. Advances
+ *				the buffer point past command control characters.
+ */
+void trim_cmd(buffer *b)
+{
+	int flag;
+
+	flag = 0;
+	while (b->buf[b->bp] == ';')
+		b->bp++, flag = 1;
+	if (flag)
+		return;
+
+	while (b->buf[b->bp] == '|')
+		b->bp++, flag = 1;
+	if (flag)
+		return;
+
+	while (b->buf[b->bp] == '&')
+		b->bp++;
 }
